@@ -1,6 +1,7 @@
 package com.arslan.shizuwall.firewall
 
 import com.arslan.shizuwall.FirewallMode
+import com.arslan.shizuwall.utils.AppKey
 import org.json.JSONObject
 
 object FirewallTargets {
@@ -46,6 +47,9 @@ object FirewallTargets {
 
     fun canSwitchWhileEnabled(to: FirewallMode, hasSelection: Boolean): Boolean =
         hasSelection || to.allowsDynamicSelection()
+
+    fun isMobileOnly(mobileOnly: Set<String>, key: String): Boolean =
+        AppKey.packageOf(key) in mobileOnly
 
     fun shouldBlockOnToggle(mode: FirewallMode, isSelected: Boolean): Boolean =
         if (mode == FirewallMode.WHITELIST) !isSelected else isSelected

@@ -127,4 +127,13 @@ class FirewallTargetsTest {
         assertEquals(noModes, FirewallTargets.parseAppModes("not json"))
         assertEquals(noModes, FirewallTargets.parseAppModes("{}"))
     }
+
+    @Test
+    fun mobileOnlyFollowsThePackageAcrossUsers() {
+        val mobileOnly = setOf("com.a")
+        assertTrue(FirewallTargets.isMobileOnly(mobileOnly, "com.a"))
+        assertTrue(FirewallTargets.isMobileOnly(mobileOnly, "10:com.a"))
+        assertFalse(FirewallTargets.isMobileOnly(mobileOnly, "com.b"))
+        assertFalse(FirewallTargets.isMobileOnly(emptySet(), "com.a"))
+    }
 }
