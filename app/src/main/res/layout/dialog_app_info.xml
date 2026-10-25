@@ -58,6 +58,27 @@
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/infoMobileOnly"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            android:text="@string/app_info_mobile_only"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            app:thumbIcon="@drawable/check_24px"
+            app:thumbIconTint="@color/switch_thumb_icon_tint" />
+
+        <TextView
+            android:id="@+id/infoMobileOnlySummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            android:text="@string/app_info_mobile_only_summary"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"

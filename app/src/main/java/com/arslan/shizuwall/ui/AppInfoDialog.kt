@@ -14,10 +14,14 @@ import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.arslan.shizuwall.R
+import com.arslan.shizuwall.firewall.FirewallTargets
+import com.arslan.shizuwall.firewall.PerUidFirewall
 import com.arslan.shizuwall.shell.ShellExecutorProvider
 import com.arslan.shizuwall.trackers.TrackerScanner
 import com.arslan.shizuwall.utils.AppIds
 import com.arslan.shizuwall.utils.CrossUserAppInfo
+import com.arslan.shizuwall.utils.FirewallUtils
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,6 +54,7 @@ object AppInfoDialog {
         packageView.text = packageName
         iconView.setImageDrawable(CrossUserAppInfo.icon(context, packageName, userId))
         metaView.text = buildMeta(context, packageInfo)
+        bindMobileOnly(context, owner, view, packageName, appName, packageInfo)
 
         val cachedResult = TrackerScanner.cachedResult(context, packageName, userId)
         if (cachedResult != null) {
@@ -71,6 +76,25 @@ object AppInfoDialog {
             val result = TrackerScanner.scan(context, packageName, userId)
             if (!dialog.isShowing) return@launch
             renderTrackers(context, result, loadingView, summaryView, listView, noteView)
+        }
+    }
+
+    private fun bindMobileOnly(context: Context, owner: LifecycleOwner, view: View, packageName: String, appName: String, packageInfo: PackageInfo?) {
+        val switch = view.findViewById<MaterialSwitch>(R.id.infoMobileOnly)
+        val summary = view.findViewById<TextView>(R.id.infoMobileOnlySummary)
+        val uid = packageInfo?.applicationInfo?.uid ?: return
+        if (!PerUidFirewall.supportsMobileOnly() || !AppIds.isBlockable(uid)) return
+        val prefs = context.getSharedPreferences(MainActivity.PREF_NAME, Context.MODE_PRIVATE)
+        switch.visibility = View.VISIBLE
+        summary.visibility = View.VISIBLE
+        switch.isChecked = FirewallTargets.isMobileOnly(PerUidFirewall.mobileOnlyKeys(context), packageName)
+        switch.setOnCheckedChangeListener { _, checked ->
+            switch.isEnabled = false
+            owner.lifecycleScope.launch {
+                val ok = FirewallUtils.setMobileOnly(context, prefs, packageName, checked)
+                switch.isEnabled = true
+                if (!ok) Toast.makeText(context, context.getString(R.string.app_info_mobile_only_failed, appName), Toast.LENGTH_LONG).show()
+            }
         }
     }
 
