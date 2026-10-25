@@ -35,6 +35,7 @@ object PerUidFirewall {
 
     const val UNRESOLVED_UID_ERROR = "unresolved-uid"
     private const val NO_RESULT_ERROR = "helper returned no result"
+    private const val OUTDATED_HELPER_ERROR = "invalid uid rule"
 
     data class RuleOutcome(val success: Boolean, val error: String)
 
@@ -256,6 +257,7 @@ object PerUidFirewall {
             when {
                 entry == "OK ${rule.uid} ${rule.rule}" -> OK
                 entry.isNullOrEmpty() -> RuleOutcome(false, "$backend helper returned no result")
+                entry.contains(OUTDATED_HELPER_ERROR) -> RuleOutcome(false, "$backend helper is outdated, restart it to apply mobile data rules")
                 else -> RuleOutcome(false, entry)
             }
         }
