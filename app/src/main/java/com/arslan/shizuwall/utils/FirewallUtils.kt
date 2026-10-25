@@ -192,6 +192,22 @@ object FirewallUtils {
         }
     }
 
+    suspend fun setMobileOnly(context: Context, prefs: SharedPreferences, packageName: String, enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+        stateLock.withLock {
+            val keys = prefs.getStringSet(MainActivity.KEY_MOBILE_ONLY_APPS, emptySet()).orEmpty()
+            prefs.edit().putStringSet(MainActivity.KEY_MOBILE_ONLY_APPS, if (enabled) keys + packageName else keys - packageName).apply()
+            val affected = loadActivePackages(prefs).filter { AppKey.packageOf(it) == packageName }
+            if (affected.isEmpty()) return@withLock true
+            val executor = ShellExecutorProvider.forContext(context)
+            val cleared = executor.execBatch(FirewallCommands.unblockAll(affected))
+            val unblocked = affected.filterIndexed { index, _ -> cleared[index].isEffectivelySuccess }
+            val blocked = executor.execBatch(FirewallCommands.blockAll(unblocked))
+            val lost = unblocked.filterIndexed { index, _ -> !blocked[index].isEffectivelySuccess }
+            if (lost.isNotEmpty()) saveActivePackages(prefs, loadActivePackages(prefs) - lost.toSet())
+            lost.isEmpty() && unblocked.size == affected.size
+        }
+    }
+
     private fun modeAdapted(context: Context, prefs: SharedPreferences, keys: List<String>): List<String> =
         FirewallTargets.effectiveBlockList(
             firewallMode(prefs),
