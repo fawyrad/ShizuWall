@@ -339,15 +339,17 @@ public class SystemDaemon {
             String[] values = encodedRule.split(":");
             if (setupError != null) {
                 response = setupError;
-            } else if (values.length != 2) {
+            } else if (values.length != 2 && values.length != 3) {
                 response = "Error (code 22): invalid uid rule";
             } else {
                 int uid = 0;
                 int rule = 0;
+                int chain = FIREWALL_CHAIN_OEM_DENY_3;
                 boolean parsed;
                 try {
                     uid = Integer.parseInt(values[0].trim());
                     rule = Integer.parseInt(values[1].trim());
+                    if (values.length == 3) chain = Integer.parseInt(values[2].trim());
                     parsed = true;
                 } catch (NumberFormatException e) {
                     parsed = false;
@@ -356,7 +358,7 @@ public class SystemDaemon {
                     response = "Error (code 22): uid and rule must be integers";
                 } else {
                     try {
-                        setter.invoke(service, FIREWALL_CHAIN_OEM_DENY_3, uid, rule);
+                        setter.invoke(service, chain, uid, rule);
                         response = "OK " + uid + " " + rule;
                     } catch (Throwable t) {
                         Throwable cause = (t.getCause() != null) ? t.getCause() : t;
