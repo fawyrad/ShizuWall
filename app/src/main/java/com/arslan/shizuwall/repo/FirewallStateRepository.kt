@@ -3,6 +3,7 @@ package com.arslan.shizuwall.repo
 import android.content.Context
 import android.content.SharedPreferences
 import com.arslan.shizuwall.FirewallMode
+import com.arslan.shizuwall.firewall.PerUidFirewall
 import com.arslan.shizuwall.ui.MainActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,10 +15,11 @@ data class FirewallState(
     val appModesJson: String = "{}",
     val firewallMode: String = FirewallMode.DEFAULT.name,
     val showSystemApps: Boolean = false,
-    val activeProfileId: String? = null
+    val activeProfileId: String? = null,
+    val mobileOnlyApps: Set<String> = emptySet()
 )
 
-class FirewallStateRepository(context: Context) {
+class FirewallStateRepository(private val context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(MainActivity.PREF_NAME, Context.MODE_PRIVATE)
 
@@ -32,7 +34,8 @@ class FirewallStateRepository(context: Context) {
             key == MainActivity.KEY_APP_MODES ||
             key == MainActivity.KEY_FIREWALL_MODE ||
             key == MainActivity.KEY_SHOW_SYSTEM_APPS ||
-            key == MainActivity.KEY_ACTIVE_PROFILE_ID
+            key == MainActivity.KEY_ACTIVE_PROFILE_ID ||
+            key == MainActivity.KEY_MOBILE_ONLY_APPS
         ) {
             _state.value = loadState()
         }
@@ -54,7 +57,8 @@ class FirewallStateRepository(context: Context) {
             firewallMode = prefs.getString(MainActivity.KEY_FIREWALL_MODE, FirewallMode.DEFAULT.name)
                 ?: FirewallMode.DEFAULT.name,
             showSystemApps = prefs.getBoolean(MainActivity.KEY_SHOW_SYSTEM_APPS, false),
-            activeProfileId = prefs.getString(MainActivity.KEY_ACTIVE_PROFILE_ID, null)
+            activeProfileId = prefs.getString(MainActivity.KEY_ACTIVE_PROFILE_ID, null),
+            mobileOnlyApps = PerUidFirewall.mobileOnlyKeys(context)
         )
     }
 

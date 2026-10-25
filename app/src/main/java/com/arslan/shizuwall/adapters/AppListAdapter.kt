@@ -82,6 +82,15 @@ class AppListAdapter(
         }
     }
 
+    private var mobileOnlyPackages: Set<String> = emptySet()
+
+    fun setMobileOnlyPackages(packages: Set<String>) {
+        if (mobileOnlyPackages != packages) {
+            mobileOnlyPackages = packages
+            notifyItemRangeChanged(0, itemCount)
+        }
+    }
+
     inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val card: MaterialCardView = itemView as MaterialCardView
         val appIcon: ImageView = itemView.findViewById(R.id.appIcon)
@@ -101,7 +110,11 @@ class AppListAdapter(
             UiUtils.loadAppIcon(appIcon, pkg, appInfo.userId, iconCache)
 
             appName.text = appInfo.appName
-            packageName.text = appInfo.packageName
+            packageName.text = if (pkg in mobileOnlyPackages) {
+                itemView.context.getString(R.string.app_list_mobile_only, pkg)
+            } else {
+                pkg
+            }
 
             if (appInfo.userId != 0) {
                 profileBadge.visibility = View.VISIBLE
