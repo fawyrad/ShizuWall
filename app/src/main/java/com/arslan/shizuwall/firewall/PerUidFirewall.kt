@@ -41,17 +41,18 @@ object PerUidFirewall {
 
     suspend fun setRules(context: Context, rules: List<Pair<String, Int>>): List<RuleOutcome> = withContext(Dispatchers.IO) {
         if (rules.isEmpty()) return@withContext emptyList()
-        val prepared = rules.map { (key, rule) -> prepare(context, key, rule) }
+        val prepared = rules.map { (key, rule) -> prepare(context, key, rule, listOf(CHAIN_OEM_DENY_3)) }
         val batch = prepared.filterIsInstance<Prepared.Applicable>()
-            .associate { it.uid to it.rule }
-            .map { (uid, rule) -> UidRule(uid, rule) }
+            .flatMap { it.rules }
+            .associateBy { it.uid to it.chain }
+            .values.toList()
         if (batch.isEmpty()) return@withContext prepared.map { outcomeOf(it, emptyMap()) }
 
         val applied = dispatch(context, batch)
-        val resultPerUid = batch.mapIndexed { index, rule ->
-            rule.uid to applied.getOrElse(index) { RuleOutcome(false, NO_RESULT_ERROR) }
+        val resultPerTarget = batch.mapIndexed { index, rule ->
+            (rule.uid to rule.chain) to applied.getOrElse(index) { RuleOutcome(false, NO_RESULT_ERROR) }
         }.toMap()
-        prepared.map { outcomeOf(it, resultPerUid) }
+        prepared.map { outcomeOf(it, resultPerTarget) }
     }
 
     suspend fun setChainEnabled(context: Context, enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
@@ -76,16 +77,18 @@ object PerUidFirewall {
         return AppIds.isBlockable(uid)
     }
 
-    private fun prepare(context: Context, key: String, rule: Int): Prepared {
+    private fun prepare(context: Context, key: String, rule: Int, chains: List<Int>): Prepared {
         val uid = resolveUid(context, key) ?: return Prepared.Skipped(UNRESOLVED)
-        if (AppIds.isBlockable(uid)) return Prepared.Applicable(uid, rule)
+        if (AppIds.isBlockable(uid)) return Prepared.Applicable(chains.map { UidRule(uid, rule, it) })
         if (rule == RULE_DEFAULT) return Prepared.Skipped(OK)
         return Prepared.Skipped(RuleOutcome(false, systemAppError(key, uid)))
     }
 
-    private fun outcomeOf(prepared: Prepared, results: Map<Int, RuleOutcome>): RuleOutcome = when (prepared) {
+    private fun outcomeOf(prepared: Prepared, results: Map<Pair<Int, Int>, RuleOutcome>): RuleOutcome = when (prepared) {
         is Prepared.Skipped -> prepared.outcome
-        is Prepared.Applicable -> results[prepared.uid] ?: RuleOutcome(false, NO_RESULT_ERROR)
+        is Prepared.Applicable -> prepared.rules
+            .map { results[it.uid to it.chain] ?: RuleOutcome(false, NO_RESULT_ERROR) }
+            .firstOrNull { !it.success } ?: OK
     }
 
     private fun systemAppError(key: String, uid: Int): String =
@@ -127,16 +130,20 @@ object PerUidFirewall {
             if (!Shizuku.pingBinder()) return rules.map { RuleOutcome(false, "Shizuku is not running") }
             val service = ShizukuUserServiceManager.obtain()
                 ?: return rules.map { RuleOutcome(false, "Shizuku user service is unavailable") }
-            val uids = IntArray(rules.size) { rules[it].uid }
-            val values = IntArray(rules.size) { rules[it].rule }
-            val errors = service.setUidFirewallRules(CHAIN_OEM_DENY_3, uids, values)
-            rules.mapIndexed { index, _ ->
-                when {
-                    index >= errors.size -> RuleOutcome(false, NO_RESULT_ERROR)
-                    errors[index].isNullOrBlank() -> OK
-                    else -> RuleOutcome(false, errors[index])
+            val outcomes = HashMap<UidRule, RuleOutcome>(rules.size)
+            rules.groupBy { it.chain }.forEach { (chain, group) ->
+                val uids = IntArray(group.size) { group[it].uid }
+                val values = IntArray(group.size) { group[it].rule }
+                val errors = service.setUidFirewallRules(chain, uids, values)
+                group.forEachIndexed { index, rule ->
+                    outcomes[rule] = when {
+                        index >= errors.size -> RuleOutcome(false, NO_RESULT_ERROR)
+                        errors[index].isNullOrBlank() -> OK
+                        else -> RuleOutcome(false, errors[index])
+                    }
                 }
             }
+            rules.map { outcomes.getValue(it) }
         } catch (t: Throwable) {
             Log.w(TAG, "Per-uid rules via Shizuku failed", t)
             rules.map { RuleOutcome(false, failureText(t)) }
@@ -214,7 +221,8 @@ object PerUidFirewall {
         return chunks
     }
 
-    private fun encode(rule: UidRule): String = "${rule.uid}:${rule.rule}"
+    private fun encode(rule: UidRule): String =
+        if (rule.chain == CHAIN_OEM_DENY_3) "${rule.uid}:${rule.rule}" else "${rule.uid}:${rule.rule}:${rule.chain}"
 
     private fun encode(rules: List<UidRule>): String = rules.joinToString(",") { encode(it) }
 
@@ -238,10 +246,10 @@ object PerUidFirewall {
         return results
     }
 
-    private data class UidRule(val uid: Int, val rule: Int)
+    private data class UidRule(val uid: Int, val rule: Int, val chain: Int)
 
     private sealed interface Prepared {
-        data class Applicable(val uid: Int, val rule: Int) : Prepared
+        data class Applicable(val rules: List<UidRule>) : Prepared
         data class Skipped(val outcome: RuleOutcome) : Prepared
     }
 }
