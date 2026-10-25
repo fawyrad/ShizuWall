@@ -44,7 +44,9 @@ object PerUidFirewall {
     suspend fun setRules(context: Context, rules: List<Pair<String, Int>>): List<RuleOutcome> = withContext(Dispatchers.IO) {
         if (rules.isEmpty()) return@withContext emptyList()
         val mobileOnly = mobileOnlyKeys(context)
-        val prepared = rules.map { (key, rule) -> prepare(context, key, rule, chainsFor(mobileOnly, key)) }
+        val clearMetered = supportsMobileOnly() && context.getSharedPreferences(MainActivity.PREF_NAME, Context.MODE_PRIVATE)
+            .contains(MainActivity.KEY_MOBILE_ONLY_APPS)
+        val prepared = rules.map { (key, rule) -> prepare(context, key, rule, chainsFor(mobileOnly, clearMetered, key, rule)) }
         val batch = prepared.filterIsInstance<Prepared.Applicable>()
             .flatMap { it.rules }
             .associateBy { it.uid to it.chain }
@@ -83,8 +85,11 @@ object PerUidFirewall {
             .getStringSet(MainActivity.KEY_MOBILE_ONLY_APPS, emptySet()).orEmpty()
     }
 
-    private fun chainsFor(mobileOnly: Set<String>, key: String): List<Int> =
-        listOf(if (FirewallTargets.isMobileOnly(mobileOnly, key)) CHAIN_METERED_DENY_ADMIN else CHAIN_OEM_DENY_3)
+    private fun chainsFor(mobileOnly: Set<String>, clearMetered: Boolean, key: String, rule: Int): List<Int> = when {
+        rule == RULE_DEFAULT && clearMetered -> listOf(CHAIN_OEM_DENY_3, CHAIN_METERED_DENY_ADMIN)
+        FirewallTargets.isMobileOnly(mobileOnly, key) -> listOf(CHAIN_METERED_DENY_ADMIN)
+        else -> listOf(CHAIN_OEM_DENY_3)
+    }
 
     fun isBlockableKey(context: Context, key: String): Boolean {
         val uid = resolveUid(context, key) ?: return true
