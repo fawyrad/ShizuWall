@@ -8,6 +8,7 @@ import com.arslan.shizuwall.utils.AppKey
 import com.arslan.shizuwall.utils.FirewallUtils
 import com.arslan.shizuwall.utils.MultiUserApps
 import com.arslan.shizuwall.firewall.FirewallCommands
+import com.arslan.shizuwall.firewall.FirewallTargets
 class PerUidRoutingExecutor(
     private val context: Context,
     private val delegate: ShellExecutor
@@ -42,11 +43,12 @@ class PerUidRoutingExecutor(
         }
         requested.forEach { (key, rule) -> effective[key] = rule }
 
-        val coveredByParent = clonesCoveredByParent(effective, uidBatchMode)
+        val mobileOnly = PerUidFirewall.mobileOnlyKeys(context)
+        val coveredByParent = clonesCoveredByParent(effective, uidBatchMode, mobileOnly)
 
         val (shellRules, uidRules) = effective.toList()
             .filterNot { it.first in coveredByParent }
-            .partition { usesShellPath(it.first, uidBatchMode) }
+            .partition { usesShellPath(it.first, uidBatchMode, mobileOnly) }
 
         val shellResults = if (shellRules.isEmpty()) {
             emptyList()
@@ -72,21 +74,22 @@ class PerUidRoutingExecutor(
         return CHAIN_FALLBACK_SUCCESS
     }
 
-    private fun usesShellPath(key: String, uidBatchMode: Boolean): Boolean {
-        if (uidBatchMode || AppKey.isSecondary(key)) return false
+    private fun usesShellPath(key: String, uidBatchMode: Boolean, mobileOnly: Set<String>): Boolean {
+        if (uidBatchMode || AppKey.isSecondary(key) || FirewallTargets.isMobileOnly(mobileOnly, key)) return false
         return !PerUidFirewall.requiresUidPath(context, key)
     }
 
     private fun clonesCoveredByParent(
         effective: Map<String, Int>,
-        uidBatchMode: Boolean
+        uidBatchMode: Boolean,
+        mobileOnly: Set<String>
     ): Map<String, String> {
         if (uidBatchMode) return emptyMap()
         val covered = LinkedHashMap<String, String>()
         for ((key, rule) in effective) {
             if (!AppKey.isSecondary(key)) continue
             val parentKey = AppKey.packageOf(key)
-            if (effective[parentKey] == rule) covered[key] = parentKey
+            if (effective[parentKey] == rule && !FirewallTargets.isMobileOnly(mobileOnly, parentKey)) covered[key] = parentKey
         }
         return covered
     }
