@@ -1,6 +1,7 @@
 package com.arslan.shizuwall.firewall
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import com.arslan.shizuwall.BuildConfig
 import com.arslan.shizuwall.WorkingMode
@@ -20,6 +21,7 @@ object PerUidFirewall {
 
     private const val TAG = "PerUidFirewall"
     private const val CHAIN_OEM_DENY_3 = 9
+    private const val CHAIN_METERED_DENY_ADMIN = 12
     const val RULE_DEFAULT = 0
     const val RULE_DENY = 2
     // Keep in sync with SystemDaemon.FW_UID_RULES_COMMAND.
@@ -41,7 +43,8 @@ object PerUidFirewall {
 
     suspend fun setRules(context: Context, rules: List<Pair<String, Int>>): List<RuleOutcome> = withContext(Dispatchers.IO) {
         if (rules.isEmpty()) return@withContext emptyList()
-        val prepared = rules.map { (key, rule) -> prepare(context, key, rule, listOf(CHAIN_OEM_DENY_3)) }
+        val mobileOnly = mobileOnlyKeys(context)
+        val prepared = rules.map { (key, rule) -> prepare(context, key, rule, chainsFor(mobileOnly, key)) }
         val batch = prepared.filterIsInstance<Prepared.Applicable>()
             .flatMap { it.rules }
             .associateBy { it.uid to it.chain }
@@ -71,6 +74,17 @@ object PerUidFirewall {
         val uid = resolveUid(context, key) ?: return false
         return !AppIds.isBlockable(uid)
     }
+
+    fun supportsMobileOnly(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
+
+    fun mobileOnlyKeys(context: Context): Set<String> {
+        if (!supportsMobileOnly()) return emptySet()
+        return context.getSharedPreferences(MainActivity.PREF_NAME, Context.MODE_PRIVATE)
+            .getStringSet(MainActivity.KEY_MOBILE_ONLY_APPS, emptySet()).orEmpty()
+    }
+
+    private fun chainsFor(mobileOnly: Set<String>, key: String): List<Int> =
+        listOf(if (FirewallTargets.isMobileOnly(mobileOnly, key)) CHAIN_METERED_DENY_ADMIN else CHAIN_OEM_DENY_3)
 
     fun isBlockableKey(context: Context, key: String): Boolean {
         val uid = resolveUid(context, key) ?: return true
