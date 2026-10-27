@@ -78,7 +78,7 @@ object PerUidFirewall {
         return !AppIds.isBlockable(uid)
     }
 
-    fun supportsMobileOnly(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
+    fun supportsMobileOnly(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
     fun mobileOnlyKeys(context: Context): Set<String> {
         if (!supportsMobileOnly()) return emptySet()
