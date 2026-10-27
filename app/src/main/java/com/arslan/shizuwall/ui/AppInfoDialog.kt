@@ -88,6 +88,11 @@ object AppInfoDialog {
         switch.visibility = View.VISIBLE
         summary.visibility = View.VISIBLE
         switch.isChecked = FirewallTargets.isMobileOnly(PerUidFirewall.mobileOnlyKeys(context), packageName)
+        if (packageInfo.requestedPermissions?.contains(android.Manifest.permission.INTERNET) != true) {
+            switch.isEnabled = false
+            summary.alpha = 0.5f
+            return
+        }
         switch.setOnCheckedChangeListener { _, checked ->
             switch.isEnabled = false
             owner.lifecycleScope.launch {
