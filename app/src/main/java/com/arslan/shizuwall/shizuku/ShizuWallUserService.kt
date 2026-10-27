@@ -70,7 +70,7 @@ class ShizuWallUserService : IShizuWallUserService.Stub {
         return try {
             val service = connectivityService() ?: return "connectivity service is unavailable"
             val method = ruleMethod(service) ?: return "setUidFirewallRule is unavailable"
-            method.invoke(service, chain, uid, rule)
+            SystemDaemon.applyUidRule(service, method, chain, uid, rule)
             null
         } catch (t: Throwable) {
             val cause = t.cause ?: t

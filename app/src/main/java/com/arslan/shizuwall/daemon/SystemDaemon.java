@@ -46,6 +46,8 @@ public class SystemDaemon {
     private static final long FG_HEARTBEAT_MS = 30000;
     private static final String FG_KEEPALIVE = ".";
     private static final int FIREWALL_CHAIN_OEM_DENY_3 = 9;
+    private static final int FIREWALL_CHAIN_METERED_DENY_ADMIN = 12;
+    private static final int FIREWALL_RULE_DENY = 2;
     private static final String UID_OWNER_MAP_MISSING = "suidownermap does not have entry for uid";
     
     private static final Set<String> BLOCKED_PATTERNS = new HashSet<>(Arrays.asList(
@@ -315,6 +317,15 @@ public class SystemDaemon {
         }
     }
 
+    public static void applyUidRule(Object service, Method setter, int chain, int uid, int rule) throws Exception {
+        if (chain == FIREWALL_CHAIN_METERED_DENY_ADMIN && android.os.Build.VERSION.SDK_INT < 35) {
+            service.getClass().getMethod("updateMeteredNetworkDenyList", int.class, boolean.class)
+                    .invoke(service, uid, rule == FIREWALL_RULE_DENY);
+        } else {
+            setter.invoke(service, chain, uid, rule);
+        }
+    }
+
     private static String setUidFirewallRules(String encodedRules) {
         Object service = null;
         Method setter = null;
@@ -358,7 +369,7 @@ public class SystemDaemon {
                     response = "Error (code 22): uid and rule must be integers";
                 } else {
                     try {
-                        setter.invoke(service, chain, uid, rule);
+                        applyUidRule(service, setter, chain, uid, rule);
                         response = "OK " + uid + " " + rule;
                     } catch (Throwable t) {
                         Throwable cause = (t.getCause() != null) ? t.getCause() : t;
