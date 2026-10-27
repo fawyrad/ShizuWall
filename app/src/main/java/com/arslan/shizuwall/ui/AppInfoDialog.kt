@@ -139,10 +139,6 @@ object AppInfoDialog {
         loadingView.visibility = View.GONE
         summaryView.visibility = View.VISIBLE
 
-        val attribution = context.getString(R.string.tracker_data_attribution)
-        noteView.text = attribution
-        noteView.visibility = View.VISIBLE
-
         when (result) {
             is TrackerScanner.ScanResult.Failed -> {
                 summaryView.text = context.getString(R.string.app_info_trackers_failed)
@@ -163,8 +159,8 @@ object AppInfoDialog {
                         }
                     }
                     listView.visibility = View.VISIBLE
-                    noteView.text = context.getString(R.string.app_info_trackers_note) +
-                        "\n\n" + attribution
+                    noteView.text = context.getString(R.string.app_info_trackers_note)
+                    noteView.visibility = View.VISIBLE
                 }
             }
         }
