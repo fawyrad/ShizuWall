@@ -19,6 +19,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.color.MaterialColors
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.children
 import com.arslan.shizuwall.utils.MultiUserApps
 import com.arslan.shizuwall.utils.UiUtils
 
@@ -195,7 +196,8 @@ class AppListAdapter(
                 itemView.setOnLongClickListener(null)
             }
 
-            card.getChildAt(0).alpha = if (appInfo.isSelectable) 1f else 0.5f
+            val dim = if (appInfo.isSelectable) 1f else 0.5f
+            (appInfoButton.parent as ViewGroup).children.forEach { it.alpha = if (it === appInfoButton) 1f else dim }
             bindInteractions(appInfo, selectionEnabled)
         }
 
