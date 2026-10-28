@@ -1,5 +1,6 @@
 package com.arslan.shizuwall.adapters
 
+import android.animation.ValueAnimator
 import android.graphics.Bitmap
 import android.util.LruCache
 import android.view.LayoutInflater
@@ -104,6 +105,8 @@ class AppListAdapter(
         val favoriteBadge: ImageView = itemView.findViewById(R.id.favoriteBadge)
         private var boundKey: String? = null
         private var boundFavorite: Boolean? = null
+        private var boundSelected: Boolean? = null
+        private var cardColorAnimator: ValueAnimator? = null
 
         fun bind(appInfo: AppInfo) {
             val pkg = appInfo.packageName
@@ -168,7 +171,15 @@ class AppListAdapter(
             } else {
                 ColorUtils.blendARGB(surfaceColor, surfaceVariantColor, 0.25f)
             }
-            card.setCardBackgroundColor(cardBgColor)
+            val animateSelection = boundKey == appInfo.key && boundSelected != null &&
+                boundSelected != appInfo.isSelected
+            boundSelected = appInfo.isSelected
+            cardColorAnimator?.cancel()
+            if (animateSelection) {
+                animateSelection(card.cardBackgroundColor.defaultColor, cardBgColor)
+            } else {
+                card.setCardBackgroundColor(cardBgColor)
+            }
 
             val accent = if (appInfo.isSelected) {
                 MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnPrimaryContainer)
@@ -199,6 +210,22 @@ class AppListAdapter(
             val dim = if (appInfo.isSelectable) 1f else 0.5f
             (appInfoButton.parent as ViewGroup).children.forEach { it.alpha = if (it === appInfoButton) 1f else dim }
             bindInteractions(appInfo, selectionEnabled)
+        }
+
+        private fun animateSelection(fromColor: Int, toColor: Int) {
+            cardColorAnimator = ValueAnimator.ofArgb(fromColor, toColor).apply {
+                duration = SELECTION_ANIM_MS
+                addUpdateListener { card.setCardBackgroundColor(it.animatedValue as Int) }
+                start()
+            }
+            appSwitch.scaleX = SELECTION_SCALE_FROM
+            appSwitch.scaleY = SELECTION_SCALE_FROM
+            appSwitch.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(SELECTION_ANIM_MS)
+                .setInterpolator(OvershootInterpolator(3f))
+                .start()
         }
 
         private fun showFavoriteBadge(favorite: Boolean) {
@@ -296,5 +323,7 @@ class AppListAdapter(
         const val FAVORITE_FADE_IN_MS = 260L
         const val FAVORITE_FADE_OUT_MS = 160L
         const val FAVORITE_SCALE_FROM = 0.4f
+        const val SELECTION_ANIM_MS = 220L
+        const val SELECTION_SCALE_FROM = 0.6f
     }
 }
