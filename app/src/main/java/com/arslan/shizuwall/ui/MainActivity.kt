@@ -30,6 +30,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityOptionsCompat
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.children
@@ -1559,6 +1560,9 @@ class MainActivity : BaseActivity() {
     }
 
     private fun morphSelectedCount(count: Int) {
+        val ring = findViewById<CircularProgressIndicator>(R.id.selectedCountRing)
+        ring.max = appList.count { it.isSelectable && (showSystemApps || !it.isSystem || it.isSelected) }.coerceAtLeast(1)
+        ring.setProgressCompat(count, true)
         val from = selectedCountText.text.toString().toIntOrNull() ?: count
         if (from == count) return
         selectedCountAnimator?.cancel()
