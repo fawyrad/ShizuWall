@@ -914,6 +914,7 @@ class MainActivity : BaseActivity() {
         )
         appListAdapter.setHybridModeEnabled(firewallMode == FirewallMode.HYBRID)
         recyclerView.adapter = appListAdapter
+        recyclerView.recycledViewPool.setMaxRecycledViews(0, 24)
         defaultItemAnimator = recyclerView.itemAnimator
         (defaultItemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)?.supportsChangeAnimations = false
 
