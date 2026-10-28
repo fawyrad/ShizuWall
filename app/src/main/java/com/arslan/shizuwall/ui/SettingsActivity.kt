@@ -182,8 +182,7 @@ class SettingsActivity : BaseActivity() {
         }
 
         val tvVersion = findViewById<TextView>(R.id.tvVersion)
-        val packageInfo = packageManager.getPackageInfo(packageName, 0)
-        tvVersion.text = getString(R.string.version_format, packageInfo.versionName)
+        tvVersion.text = getString(R.string.version_format, com.arslan.shizuwall.BuildConfig.VERSION_NAME)
     }
 
     @SuppressLint("RestrictedApi")
