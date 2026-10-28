@@ -22,6 +22,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <FrameLayout
+        android:id="@+id/selectedCountContainer"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/appTitle"
+        app:layout_constraintBottom_toBottomOf="@id/appTitle">
+
+        <TextView
+            android:id="@+id/selectedCountText"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:text="@string/selected_count_zero"
+            android:textAppearance="@style/TextAppearance.Material3.LabelLarge.Emphasized"
+            android:textColor="?attr/colorOnSecondaryContainer"
+            android:gravity="center"
+            android:background="@drawable/selected_count_badge"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </FrameLayout>
+
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/firewallProgress"
         android:layout_width="wrap_content"
@@ -50,10 +74,10 @@
         android:id="@+id/firewallToggle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="8dp"
         app:thumbIcon="@drawable/check_24px"
         app:thumbIconTint="@color/switch_thumb_icon_tint"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/selectedCountContainer"
         app:layout_constraintTop_toTopOf="@id/appTitle"
         app:layout_constraintBottom_toBottomOf="@id/appTitle" />
 
@@ -128,32 +152,6 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/rightBarControls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchContainer"
-        app:layout_constraintBottom_toBottomOf="@id/categoryContainer">
-
-        <TextView
-            android:id="@+id/selectedCountText"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:text="@string/selected_count_zero"
-            android:textAppearance="@style/TextAppearance.Material3.LabelLarge.Emphasized"
-            android:textColor="?attr/colorOnSecondaryContainer"
-            android:gravity="center"
-            android:background="@drawable/selected_count_badge"
-            android:clickable="true"
-            android:focusable="true" />
-
-    </LinearLayout>
-
     <HorizontalScrollView
         android:id="@+id/categoryContainer"
         android:layout_width="0dp"
@@ -165,9 +163,10 @@
         android:paddingBottom="4dp"
         android:clipToPadding="false"
         android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginTop="8dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/rightBarControls"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/searchContainer">
 
         <com.google.android.material.chip.ChipGroup

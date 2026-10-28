@@ -1561,7 +1561,7 @@ class MainActivity : BaseActivity() {
         val dimmed = listDimmed
         if (::selectedCountText.isInitialized) {
             selectedCountText.isEnabled = !dimmed
-            selectedCountText.alpha = if (dimmed) 0.4f else 1.0f
+            (selectedCountText.parent as View).alpha = if (dimmed) 0.4f else 1.0f
         }
         if (::firewallToggle.isInitialized) {
             firewallToggle.isClickable = !isFirewallProcessRunning
