@@ -205,6 +205,7 @@ class MainActivity : BaseActivity() {
     private var profileEnableRequested = false
     private var isEnablingProcess = false
     private var lastSelectedCountToastTime = 0L
+    private var selectedCountAnimator: ValueAnimator? = null
     private var sortFilterRunnable = Runnable {}
 
     private val requestPermissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
@@ -1548,13 +1549,32 @@ class MainActivity : BaseActivity() {
 
     private fun updateSelectedCount() {
         val count = appList.count { it.isSelected }
-        selectedCountText.text = count.toString()
+        morphSelectedCount(count)
 
         if (::firewallToggle.isInitialized) {
             firewallToggle.isEnabled = isFirewallEnabled || count > 0 || firewallMode.allowsDynamicSelection()
         }
         
         updateInteractiveViews()
+    }
+
+    private fun morphSelectedCount(count: Int) {
+        val from = selectedCountText.text.toString().toIntOrNull() ?: count
+        if (from == count) return
+        selectedCountAnimator?.cancel()
+        if (kotlin.math.abs(count - from) == 1) {
+            selectedCountText.text = count.toString()
+        } else {
+            selectedCountAnimator = ValueAnimator.ofInt(from, count).apply {
+                duration = 200L
+                addUpdateListener { selectedCountText.text = it.animatedValue.toString() }
+                start()
+            }
+        }
+        selectedCountText.scaleX = 0.85f
+        selectedCountText.scaleY = 0.85f
+        selectedCountText.animate().scaleX(1f).scaleY(1f).setDuration(150L)
+            .setInterpolator(android.view.animation.OvershootInterpolator(3f)).start()
     }
 
     private fun updateInteractiveViews() {
