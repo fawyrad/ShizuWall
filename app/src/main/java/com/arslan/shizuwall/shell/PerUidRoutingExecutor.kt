@@ -89,7 +89,7 @@ class PerUidRoutingExecutor(
         for ((key, rule) in effective) {
             if (!AppKey.isSecondary(key)) continue
             val parentKey = AppKey.packageOf(key)
-            if (effective[parentKey] == rule && !FirewallTargets.isMobileOnly(mobileOnly, parentKey)) covered[key] = parentKey
+            if (effective[parentKey] == rule && !FirewallTargets.isMobileOnly(mobileOnly, parentKey) && !FirewallTargets.isMobileOnly(mobileOnly, key)) covered[key] = parentKey
         }
         return covered
     }

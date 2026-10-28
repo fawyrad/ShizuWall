@@ -19,6 +19,7 @@ import com.arslan.shizuwall.firewall.PerUidFirewall
 import com.arslan.shizuwall.shell.ShellExecutorProvider
 import com.arslan.shizuwall.trackers.TrackerScanner
 import com.arslan.shizuwall.utils.AppIds
+import com.arslan.shizuwall.utils.AppKey
 import com.arslan.shizuwall.utils.CrossUserAppInfo
 import com.arslan.shizuwall.utils.FirewallUtils
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -54,7 +55,7 @@ object AppInfoDialog {
         packageView.text = packageName
         iconView.setImageDrawable(CrossUserAppInfo.icon(context, packageName, userId))
         metaView.text = buildMeta(context, packageInfo)
-        bindMobileOnly(context, owner, view, packageName, appName, packageInfo)
+        bindMobileOnly(context, owner, view, AppKey.of(userId, packageName), appName, packageInfo)
 
         val cachedResult = TrackerScanner.cachedResult(context, packageName, userId)
         if (cachedResult != null) {
@@ -79,16 +80,17 @@ object AppInfoDialog {
         }
     }
 
-    private fun bindMobileOnly(context: Context, owner: LifecycleOwner, view: View, packageName: String, appName: String, packageInfo: PackageInfo?) {
+    private fun bindMobileOnly(context: Context, owner: LifecycleOwner, view: View, key: String, appName: String, packageInfo: PackageInfo?) {
         val switch = view.findViewById<MaterialSwitch>(R.id.infoMobileOnly)
         val summary = view.findViewById<TextView>(R.id.infoMobileOnlySummary)
-        val uid = packageInfo?.applicationInfo?.uid ?: return
+        val info = packageInfo?.applicationInfo ?: CrossUserAppInfo.applicationInfo(context, AppKey.packageOf(key), AppKey.userIdOf(key))
+        val uid = info?.uid ?: return
         if (!PerUidFirewall.supportsMobileOnly() || !AppIds.isBlockable(uid)) return
         val prefs = context.getSharedPreferences(MainActivity.PREF_NAME, Context.MODE_PRIVATE)
         switch.visibility = View.VISIBLE
         summary.visibility = View.VISIBLE
-        switch.isChecked = FirewallTargets.isMobileOnly(PerUidFirewall.mobileOnlyKeys(context), packageName)
-        if (packageInfo.requestedPermissions?.contains(android.Manifest.permission.INTERNET) != true) {
+        switch.isChecked = FirewallTargets.isMobileOnly(PerUidFirewall.mobileOnlyKeys(context), key)
+        if (packageInfo != null && packageInfo.requestedPermissions?.contains(android.Manifest.permission.INTERNET) != true) {
             switch.isEnabled = false
             summary.alpha = 0.5f
             return
@@ -96,7 +98,7 @@ object AppInfoDialog {
         switch.setOnCheckedChangeListener { _, checked ->
             switch.isEnabled = false
             owner.lifecycleScope.launch {
-                val ok = FirewallUtils.setMobileOnly(context, prefs, packageName, checked)
+                val ok = FirewallUtils.setMobileOnly(context, prefs, key, checked)
                 switch.isEnabled = true
                 if (!ok) Toast.makeText(context, context.getString(R.string.app_info_mobile_only_failed, appName), Toast.LENGTH_LONG).show()
             }

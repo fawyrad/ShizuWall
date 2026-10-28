@@ -114,7 +114,7 @@ class AppListAdapter(
             UiUtils.loadAppIcon(appIcon, pkg, appInfo.userId, iconCache)
 
             appName.text = appInfo.appName
-            packageName.text = if (pkg in mobileOnlyPackages) {
+            packageName.text = if (appInfo.key in mobileOnlyPackages) {
                 itemView.context.getString(R.string.app_list_mobile_only, pkg)
             } else {
                 pkg

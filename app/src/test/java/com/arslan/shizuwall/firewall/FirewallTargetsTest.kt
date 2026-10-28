@@ -129,10 +129,12 @@ class FirewallTargetsTest {
     }
 
     @Test
-    fun mobileOnlyFollowsThePackageAcrossUsers() {
-        val mobileOnly = setOf("com.a")
+    fun mobileOnlyIsPerAppCopy() {
+        val mobileOnly = setOf("com.a", "10:com.c")
         assertTrue(FirewallTargets.isMobileOnly(mobileOnly, "com.a"))
-        assertTrue(FirewallTargets.isMobileOnly(mobileOnly, "10:com.a"))
+        assertFalse(FirewallTargets.isMobileOnly(mobileOnly, "10:com.a"))
+        assertTrue(FirewallTargets.isMobileOnly(mobileOnly, "10:com.c"))
+        assertFalse(FirewallTargets.isMobileOnly(mobileOnly, "com.c"))
         assertFalse(FirewallTargets.isMobileOnly(mobileOnly, "com.b"))
         assertFalse(FirewallTargets.isMobileOnly(emptySet(), "com.a"))
     }

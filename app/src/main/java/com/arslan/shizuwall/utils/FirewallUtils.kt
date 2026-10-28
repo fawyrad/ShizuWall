@@ -192,11 +192,11 @@ object FirewallUtils {
         }
     }
 
-    suspend fun setMobileOnly(context: Context, prefs: SharedPreferences, packageName: String, enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+    suspend fun setMobileOnly(context: Context, prefs: SharedPreferences, key: String, enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
         stateLock.withLock {
             val keys = prefs.getStringSet(MainActivity.KEY_MOBILE_ONLY_APPS, emptySet()).orEmpty()
-            prefs.edit().putStringSet(MainActivity.KEY_MOBILE_ONLY_APPS, if (enabled) keys + packageName else keys - packageName).apply()
-            val affected = loadActivePackages(prefs).filter { AppKey.packageOf(it) == packageName }
+            prefs.edit().putStringSet(MainActivity.KEY_MOBILE_ONLY_APPS, if (enabled) keys + key else keys - key).apply()
+            val affected = loadActivePackages(prefs).filter { AppKey.packageOf(it) == AppKey.packageOf(key) }
             if (affected.isEmpty()) return@withLock true
             val executor = ShellExecutorProvider.forContext(context)
             val cleared = executor.execBatch(FirewallCommands.unblockAll(affected))
