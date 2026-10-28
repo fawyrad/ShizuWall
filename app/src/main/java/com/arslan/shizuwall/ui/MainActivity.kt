@@ -15,6 +15,7 @@ import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.view.GestureDetector
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -818,17 +819,31 @@ class MainActivity : BaseActivity() {
                     && !checkPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
                 ) return true
 
+                selectedCountText.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                 showBulkSelectDialog(select = true)
                 return true
             }
 
             override fun onLongPress(e: MotionEvent) {
-                if (selectedCountText.isEnabled) showBulkSelectDialog(select = false)
+                if (!selectedCountText.isEnabled) return
+                selectedCountText.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                showBulkSelectDialog(select = false)
             }
         })
 
+        val counterFrame = selectedCountText.parent as View
         selectedCountText.setOnTouchListener { v, event ->
             gestureDetector.onTouchEvent(event)
+            if (selectedCountText.isEnabled) when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    counterFrame.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100L)
+                        .setInterpolator(DecelerateInterpolator()).start()
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                    counterFrame.animate().scaleX(1f).scaleY(1f).setDuration(350L)
+                        .setInterpolator(android.view.animation.OvershootInterpolator(4f)).start()
+            }
             if (!selectedCountText.isEnabled) false else {
                 v.performClick()
                 true
