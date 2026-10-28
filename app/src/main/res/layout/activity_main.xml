@@ -22,6 +22,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.arslan.shizuwall.ui.WavyBorderView
+        android:id="@+id/firewallProgress"
+        android:layout_width="70dp"
+        android:layout_height="50dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/firewallToggle"
+        app:layout_constraintEnd_toEndOf="@id/firewallToggle"
+        app:layout_constraintTop_toTopOf="@id/firewallToggle"
+        app:layout_constraintBottom_toBottomOf="@id/firewallToggle" />
+
     <FrameLayout
         android:id="@+id/selectedCountContainer"
         android:layout_width="44dp"
@@ -55,19 +65,6 @@
 
     </FrameLayout>
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/firewallProgress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:indeterminate="true"
-        android:visibility="gone"
-        app:indicatorSize="26dp"
-        app:trackThickness="3dp"
-        app:layout_constraintEnd_toStartOf="@id/firewallLabel"
-
-        app:layout_constraintTop_toTopOf="@id/appTitle"
-        app:layout_constraintBottom_toBottomOf="@id/appTitle" />
     <TextView
         android:id="@+id/firewallLabel"
         android:layout_width="wrap_content"

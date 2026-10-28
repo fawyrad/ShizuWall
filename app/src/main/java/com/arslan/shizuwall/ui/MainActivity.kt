@@ -163,7 +163,7 @@ class MainActivity : BaseActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var appListAdapter: AppListAdapter
     private lateinit var firewallToggle: com.google.android.material.materialswitch.MaterialSwitch
-    private lateinit var firewallProgress: android.widget.ProgressBar
+    private lateinit var firewallProgress: View
     private lateinit var searchView: SearchView
     private lateinit var selectedCountText: TextView
     private lateinit var appListLoadingContainer: View
