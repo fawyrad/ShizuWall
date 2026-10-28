@@ -9,6 +9,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.transition.Transition
+import android.transition.TransitionListenerAdapter
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -31,6 +34,8 @@ import com.arslan.shizuwall.utils.ShizukuPackageResolver
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.transition.platform.MaterialContainerTransform
+import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,12 +49,28 @@ import com.arslan.shizuwall.firewall.FirewallCommands
 class SettingsActivity : BaseActivity() {
 
     companion object {
+        const val TRANSITION_NAME = "settings"
         private const val EXPORT_SCHEMA = "shizuwall.preferences"
         private val APP_LOCK_KEYS = setOf(AppLock.KEY_ENABLED, AppLock.KEY_PIN, AppLock.KEY_BIOMETRIC, AppLock.KEY_PIN_LENGTH)
         private const val EXPORT_VERSION = 3
     }
 
     private lateinit var sharedPreferences: SharedPreferences
+
+    private fun containerTransform(ms: Long) = MaterialContainerTransform().apply {
+        addTarget(android.R.id.content)
+        duration = ms
+        isElevationShadowEnabled = false
+        addListener(object : TransitionListenerAdapter() {
+            override fun onTransitionStart(transition: Transition) = layer(View.LAYER_TYPE_HARDWARE)
+            override fun onTransitionEnd(transition: Transition) = layer(View.LAYER_TYPE_NONE)
+            override fun onTransitionCancel(transition: Transition) = layer(View.LAYER_TYPE_NONE)
+        })
+    }
+
+    private fun layer(type: Int) {
+        findViewById<View>(R.id.settingsRoot)?.setLayerType(type, null)
+    }
 
     private val createDocumentLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -64,12 +85,18 @@ class SettingsActivity : BaseActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setEnterSharedElementCallback(MaterialContainerTransformSharedElementCallback())
+        window.enterTransition = null
+        window.returnTransition = null
+        window.sharedElementEnterTransition = containerTransform(450L)
+        window.sharedElementReturnTransition = containerTransform(350L)
         super.onCreate(savedInstanceState)
 
         sharedPreferences = getSharedPreferences(MainActivity.PREF_NAME, MODE_PRIVATE)
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_settings)
+        findViewById<View>(android.R.id.content).transitionName = TRANSITION_NAME
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setupSettingsChrome(R.id.settingsRoot, toolbar)
@@ -78,7 +105,7 @@ class SettingsActivity : BaseActivity() {
             if (isTaskRoot) {
                 startActivity(Intent(this, MainActivity::class.java))
             }
-            finish()
+            finishAfterTransition()
         }
 
         findViewById<LinearLayout>(R.id.rowAppearance).setOnClickListener {

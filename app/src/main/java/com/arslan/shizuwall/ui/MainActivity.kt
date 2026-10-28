@@ -28,6 +28,8 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.SearchView
+import androidx.core.app.ActivityOptionsCompat
+import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.arslan.shizuwall.services.AppMonitorService
@@ -372,9 +374,13 @@ class MainActivity : BaseActivity() {
         }
 
         val settingsButton: View? = findViewById(R.id.settingsButton)
+        setExitSharedElementCallback(MaterialContainerTransformSharedElementCallback())
+        window.sharedElementsUseOverlay = false
+        window.exitTransition = null
+        window.reenterTransition = null
         settingsButton?.setOnClickListener {
             val intent = Intent(this, SettingsActivity::class.java)
-            settingsLauncher.launch(intent)
+            settingsLauncher.launch(intent, ActivityOptionsCompat.makeSceneTransitionAnimation(this, it, SettingsActivity.TRANSITION_NAME))
         }
 
         val profileButton: View? = findViewById(R.id.profileButton)
