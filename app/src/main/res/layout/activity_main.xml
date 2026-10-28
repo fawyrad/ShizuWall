@@ -72,6 +72,12 @@
         android:text="@string/enable_firewall"
         android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
         android:paddingEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toEndOf="@id/appTitle"
         app:layout_constraintEnd_toStartOf="@id/firewallToggle"
         app:layout_constraintTop_toTopOf="@id/appTitle"
         app:layout_constraintBottom_toBottomOf="@id/appTitle" />
