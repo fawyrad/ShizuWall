@@ -46,7 +46,9 @@
         <item name="chipStyle">@style/Widget.ShizuWall.Chip.Ndot</item>
     </style>
 
-    <style name="Widget.ShizuWall.Chip" parent="Widget.Material3.Chip.Filter" />
+    <style name="Widget.ShizuWall.Chip" parent="Widget.Material3.Chip.Filter">
+        <item name="checkedIconVisible">false</item>
+    </style>
 
     <style name="Widget.ShizuWall.CardView" parent="Widget.Material3.CardView.Filled">
         <item name="cardBackgroundColor">?attr/colorSurfaceContainerHigh</item>
