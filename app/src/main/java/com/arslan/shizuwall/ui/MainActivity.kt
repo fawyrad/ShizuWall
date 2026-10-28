@@ -1,5 +1,6 @@
 package com.arslan.shizuwall.ui
 
+import android.animation.ValueAnimator
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -31,6 +32,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityOptionsCompat
 import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback
 import androidx.core.view.ViewCompat
+import androidx.core.view.children
 import androidx.core.view.WindowInsetsCompat
 import com.arslan.shizuwall.services.AppMonitorService
 import com.arslan.shizuwall.services.ForegroundDetectionService
@@ -483,6 +485,7 @@ class MainActivity : BaseActivity() {
             sortAndFilterApps(preserveScrollPosition = false, scrollToTop = true)
         }
 
+        categoryGroup.children.forEach { bindChipMorph(it as Chip) }
         updateCategoryChips()
 
         val hasWarmCache = restoreAppListFromCache()
@@ -2395,6 +2398,35 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    private fun bindChipMorph(chip: Chip) {
+        var animator: ValueAnimator? = null
+        val density = resources.displayMetrics.density
+        fun radius(pressed: Boolean) = when {
+            pressed -> 4 * density
+            chip.isChecked -> chip.chipMinHeight / 2
+            else -> 8 * density
+        }
+        fun morph(pressed: Boolean) {
+            animator?.cancel()
+            animator = ValueAnimator.ofFloat(chip.chipCornerRadius, radius(pressed)).apply {
+                duration = 250L
+                addUpdateListener { chip.chipCornerRadius = it.animatedValue as Float }
+                start()
+            }
+        }
+        chip.chipCornerRadius = radius(false)
+        chip.setOnCheckedChangeListener { _, _ -> morph(false) }
+        chip.setOnTouchListener { _, e ->
+            when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN -> morph(true)
+                MotionEvent.ACTION_UP -> if (e.x !in 0f..chip.width.toFloat() || e.y !in 0f..chip.height.toFloat()) morph(false)
+                MotionEvent.ACTION_CANCEL -> morph(false)
+            }
+            false
+        }
+    }
+
     private fun syncProfileChips(categoryGroup: ChipGroup) {
         val userIds = if (showOtherProfiles) {
             appList.asSequence()
@@ -2431,6 +2463,7 @@ class MainActivity : BaseActivity() {
                 text = MultiUserApps.userLabel(this@MainActivity, userId)
             }
             categoryGroup.addView(chip)
+            bindChipMorph(chip)
             profileChipIds[userId] = chip.id
         }
 
