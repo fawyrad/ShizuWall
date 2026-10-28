@@ -38,6 +38,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.chip.ChipGroup
@@ -399,6 +400,8 @@ class MainActivity : BaseActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            v.findViewById<View>(R.id.scrollTopButton).translationY = -(ime - systemBars.bottom).coerceAtLeast(0).toFloat()
             insets
         }
 
@@ -439,12 +442,17 @@ class MainActivity : BaseActivity() {
         setupSelectAllCheckbox()
         setupRecyclerView()
 
-        val scrollTopButton: View? = findViewById(R.id.scrollTopButton)
-        scrollTopButton?.setOnClickListener {
+        val scrollTopButton = findViewById<FloatingActionButton>(R.id.scrollTopButton)
+        scrollTopButton.setOnClickListener {
             if (filteredAppList.isNotEmpty()) {
                 recyclerView.smoothScrollToPosition(0)
             }
         }
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                if (rv.canScrollVertically(-1)) scrollTopButton.show() else scrollTopButton.hide()
+            }
+        })
 
         val categoryGroup = findViewById<ChipGroup>(R.id.categoryChipGroup)
         categoryGroup.setOnCheckedStateChangeListener { _, checkedIds ->

@@ -140,20 +140,6 @@
         app:layout_constraintTop_toBottomOf="@id/searchContainer"
         app:layout_constraintBottom_toBottomOf="@id/categoryContainer">
 
-        <ImageView
-            android:id="@+id/scrollTopButton"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginEnd="6dp"
-            android:src="@drawable/arrow_upward_24px"
-            android:background="@drawable/selected_count_badge"
-            android:padding="7dp"
-            android:scaleType="fitCenter"
-            android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="@string/scroll_to_top"
-            app:tint="?attr/colorOnSecondaryContainer" />
-
         <TextView
             android:id="@+id/selectedCountText"
             android:layout_width="34dp"
@@ -284,7 +270,21 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:paddingTop="4dp"
+        android:paddingBottom="88dp"
+        android:clipToPadding="false"
         tools:listitem="@layout/item_app" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/scrollTopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        android:contentDescription="@string/scroll_to_top"
+        app:srcCompat="@drawable/arrow_upward_24px"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <LinearLayout
         android:id="@+id/appListLoadingContainer"
